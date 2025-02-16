@@ -112,7 +112,7 @@ class MetricsStream(KlaviyoStream):
     path = "/metrics"
     primary_keys = ["id"]
     replication_key = None
-    schema = th.PropertiesObject(
+    schema = th.ObjectType(
         th.Property("id", th.StringType),
         th.Property("attributes", th.ObjectType(
             th.Property("name", th.StringType),
@@ -125,12 +125,11 @@ class MetricsStream(KlaviyoStream):
             th.Property("created", th.DateTimeType),
             th.Property("updated", th.DateTimeType),
         )),
-    )
+    ).to_dict()
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         """Post process row."""
         if row.get("attributes", {}).get("integration"):
-            # Ako je integration objekat, uzmi samo category string
             integration = row["attributes"]["integration"]
             if isinstance(integration.get("category"), dict):
                 integration["category"] = integration["category"].get("category")
