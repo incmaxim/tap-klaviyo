@@ -35,6 +35,12 @@ class EventsStream(KlaviyoStream):
     def is_sorted(self) -> bool:
         return True
 
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
+
 
 class CampaignsStream(KlaviyoStream):
     """Define custom stream."""
@@ -82,6 +88,12 @@ class CampaignsStream(KlaviyoStream):
     def is_sorted(self) -> bool:
         return True
 
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
+
 
 class ProfilesStream(KlaviyoStream):
     """Define custom stream."""
@@ -104,6 +116,12 @@ class ProfilesStream(KlaviyoStream):
     @property
     def is_sorted(self) -> bool:
         return True
+
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
 
 
 class MetricsStream(KlaviyoStream):
@@ -135,6 +153,12 @@ class MetricsStream(KlaviyoStream):
                 integration["category"] = integration["category"].get("category")
         return row
 
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
+
 
 class ListsStream(KlaviyoStream):
     """Define custom stream."""
@@ -159,6 +183,12 @@ class ListsStream(KlaviyoStream):
         row["updated"] = row["attributes"]["updated"]
         return row
 
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
+
 
 class ListPersonStream(KlaviyoStream):
     """Define custom stream."""
@@ -174,6 +204,12 @@ class ListPersonStream(KlaviyoStream):
     def post_process(self, row: dict, context: dict) -> dict | None:
         row["list_id"] = context["list_id"]
         return row
+
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
 
 
 class FlowsStream(KlaviyoStream):
@@ -193,6 +229,12 @@ class FlowsStream(KlaviyoStream):
     ) -> dict | None:
         row["updated"] = row["attributes"]["updated"]
         return row
+
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)
 
 
 class TemplatesStream(KlaviyoStream):
@@ -215,3 +257,9 @@ class TemplatesStream(KlaviyoStream):
     @property
     def is_sorted(self) -> bool:
         return True
+
+    def get_records(self, context: dict | None):
+        """Get records from stream source."""
+        if not self.selected:
+            return
+        yield from super().get_records(context)

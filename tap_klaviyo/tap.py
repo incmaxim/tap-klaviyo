@@ -49,14 +49,36 @@ class TapKlaviyo(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
+        th.Property(
+            "enable_campaigns",
+            th.BooleanType,
+            default=True,
+            description="Enable/disable campaigns stream",
+        ),
+        th.Property(
+            "enable_metrics",
+            th.BooleanType,
+            default=True,
+            description="Enable/disable metrics stream",
+        ),
     ).to_dict()
+
+    def setup_mapper(self):
+        """Set up the stream mapper."""
+        self._config.setdefault("flattening_enabled", True)
+        self._config.setdefault("flattening_max_depth", 2)
+        return super().setup_mapper()
 
     def discover_streams(self) -> List[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
-        # Inicijaliziramo sve streamove
-        streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
-        # Vraćamo samo one koji su selektovani kroz Meltano konfiguraciju
-        return [stream for stream in streams if stream.selected]
+        enabled_streams = []
+        
+        for stream_type in STREAM_TYPES:
+            stream_name = stream_type.__name__.lower().replace('stream', '')
+            if self.config.get(f"enable_{stream_name}", True):
+                enabled_streams.append(stream_type)
+                
+        return [stream_class(tap=self) for stream_class in enabled_streams]
 
 
 if __name__ == "__main__":
