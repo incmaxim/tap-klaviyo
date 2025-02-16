@@ -49,12 +49,8 @@ class TapKlaviyo(Tap):
     ).to_dict()
 
     def discover_streams(self) -> list[streams.KlaviyoStream]:
-        """Return a list of discovered streams.
-
-        Returns:
-            A list of discovered streams.
-        """
-        return [
+        """Return a list of discovered streams."""
+        available_streams = [
             streams.EventsStream(self),
             streams.CampaignsStream(self),
             streams.MetricsStream(self),
@@ -64,6 +60,10 @@ class TapKlaviyo(Tap):
             streams.FlowsStream(self),
             streams.TemplatesStream(self),
         ]
+        
+        # Filtriraj samo selektirane streamove
+        selected_stream_names = {s.split('.')[0] for s in self.config.get('select', [])}
+        return [s for s in available_streams if s.name in selected_stream_names]
 
 
 if __name__ == "__main__":

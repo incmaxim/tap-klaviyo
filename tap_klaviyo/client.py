@@ -23,15 +23,14 @@ DEFAULT_START_DATE = datetime(2000, 1, 1, tzinfo=UTC).isoformat()
 
 
 def _isodate_from_date_string(date_string: str) -> str:
-    """Convert a date string to an ISO date string.
-
-    Args:
-        date_string: The date string to convert.
-
-    Returns:
-        An ISO date string.
-    """
-    return datetime.strptime(date_string, "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
+    """Convert a date string to an ISO date string."""
+    try:
+        # Prvo pokušaj parse ISO formata
+        dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+    except ValueError:
+        # Ako ne uspije, pokušaj YYYY-MM-DD format
+        dt = datetime.strptime(date_string, "%Y-%m-%d")
+    return dt.replace(tzinfo=UTC).isoformat()
 
 
 class KlaviyoPaginator(BaseHATEOASPaginator):
@@ -68,22 +67,28 @@ class KlaviyoAuthenticator:
 
     def _refresh_access_token(self) -> None:
         """Refresh the access token using the refresh token."""
-        headers = {
-            "Authorization": self._get_basic_auth_header(),
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-        data = {
-            "grant_type": "refresh_token",
-            "refresh_token": self.refresh_token
-        }
+        try:
+            headers = {
+                "Authorization": self._get_basic_auth_header(),
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            data = {
+                "grant_type": "refresh_token",
+                "refresh_token": self.refresh_token
+            }
 
-        response = requests.post(self.TOKEN_URL, headers=headers, data=data)
-        response.raise_for_status()
-        
-        token_data = response.json()
-        self._access_token = token_data["access_token"]
-        # Set token expiration time (usually 1 hour, subtract 5 minutes for safety)
-        self._token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"] - 300)
+            response = requests.post(self.TOKEN_URL, headers=headers, data=data)
+            response.raise_for_status()
+            
+            token_data = response.json()
+            if "access_token" not in token_data:
+                raise ValueError("No access_token in response")
+            
+            self._access_token = token_data["access_token"]
+            expires_in = token_data.get("expires_in", 3600)  # default to 1 hour
+            self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 300)
+        except Exception as e:
+            raise Exception(f"Failed to refresh access token: {str(e)}") from e
 
 
 class KlaviyoStream(RESTStream):
@@ -154,3 +159,35 @@ class KlaviyoStream(RESTStream):
         if self.max_page_size:
             params["page[size]"] = self.max_page_size
         return params
+
+    def get_records(
+        self,
+        context: dict | None,
+    ) -> t.Iterable[dict]:
+        """Get records from stream source."""
+        if not self.selected:
+            self.logger.info(f"Stream {self.name} is not selected. Skipping.")
+            return []
+            
+        selected_properties = self.get_selected_properties()
+        if not selected_properties:
+            self.logger.info(f"No properties selected for stream {self.name}. Skipping.")
+            return []
+
+        for record in super().get_records(context):
+            if selected_properties:
+                filtered_record = {k: v for k, v in record.items() if k in selected_properties}
+                yield filtered_record
+            else:
+                yield record
+
+    def get_selected_properties(self) -> set[str]:
+        """Get set of selected property names."""
+        if not self.selected:
+            return set()
+        
+        properties = set()
+        for md in self.metadata.values():
+            if md.selected:
+                properties.add(md.key)
+        return properties
