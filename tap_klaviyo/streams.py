@@ -6,6 +6,7 @@ import typing as t
 from pathlib import Path
 
 from tap_klaviyo.client import KlaviyoStream
+from tap_klaviyo.schemas import th
 
 if t.TYPE_CHECKING:
     from urllib.parse import ParseResult
@@ -106,20 +107,33 @@ class ProfilesStream(KlaviyoStream):
 
 
 class MetricsStream(KlaviyoStream):
-    """Define custom stream."""
-
+    """Metrics stream."""
     name = "metrics"
     path = "/metrics"
     primary_keys = ["id"]
     replication_key = None
-    schema_filepath = SCHEMAS_DIR / "metrics.json"
+    schema = th.PropertiesObject(
+        th.Property("id", th.StringType),
+        th.Property("attributes", th.ObjectType(
+            th.Property("name", th.StringType),
+            th.Property("integration", th.ObjectType(
+                th.Property("name", th.StringType),
+                th.Property("category", th.StringType),
+                th.Property("object", th.StringType),
+                th.Property("key", th.StringType),
+            )),
+            th.Property("created", th.DateTimeType),
+            th.Property("updated", th.DateTimeType),
+        )),
+    )
 
-    def post_process(
-        self,
-        row: dict,
-        context: dict | None = None,  # noqa: ARG002
-    ) -> dict | None:
-        row["updated"] = row["attributes"]["updated"]
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
+        """Post process row."""
+        if row.get("attributes", {}).get("integration"):
+            # Ako je integration objekat, uzmi samo category string
+            integration = row["attributes"]["integration"]
+            if isinstance(integration.get("category"), dict):
+                integration["category"] = integration["category"].get("category")
         return row
 
 
