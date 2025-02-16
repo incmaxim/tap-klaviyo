@@ -165,15 +165,13 @@ class KlaviyoStream(RESTStream):
         context: dict | None,
     ) -> t.Iterable[dict]:
         """Get records from stream source."""
-        # Provjeri je li stream selektiran
-        if hasattr(self.tap, 'catalog'):
-            if self.name not in self.tap.catalog.get('selected_streams', []):
-                self.logger.info(f"Stream {self.name} is not selected, skipping")
-                return
+        selected_streams = self.tap.config.get('selected_streams', [])
+        if selected_streams and self.name not in selected_streams:
+            self.logger.info(f"Stream {self.name} is not selected, skipping")
+            return
         
         self.logger.info(f"Fetching records for stream {self.name}")
-        for record in super().get_records(context):
-            yield record
+        yield from super().get_records(context)
 
     def get_selected_properties(self) -> set[str]:
         """Get set of selected property names."""

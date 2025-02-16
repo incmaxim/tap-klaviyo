@@ -46,6 +46,12 @@ class TapKlaviyo(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
+        th.Property(
+            "selected_streams",
+            th.ArrayType(th.StringType),
+            required=False,
+            description="List of streams to sync. If not provided, all streams will be synced.",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> list[streams.KlaviyoStream]:
@@ -61,18 +67,15 @@ class TapKlaviyo(Tap):
             streams.TemplatesStream(self),
         ]
 
-        # Ako imamo catalog.json, koristi ga za filtriranje streamova
-        if self.config.get('catalog'):
-            selected_streams = []
-            for stream in available_streams:
-                # Provjeri je li stream selektiran u katalogu
-                if stream.name in self.config['catalog'].get('selected_streams', []):
-                    selected_streams.append(stream)
-                    self.logger.info(f"Stream {stream.name} is selected")
-                else:
-                    self.logger.info(f"Stream {stream.name} is not selected")
-            return selected_streams
+        # Ako imamo selected_streams u konfiguraciji, koristi ih za filtriranje
+        if selected_streams := self.config.get('selected_streams'):
+            self.logger.info(f"Filtering streams based on selection: {selected_streams}")
+            return [
+                stream for stream in available_streams 
+                if stream.name in selected_streams
+            ]
         
+        self.logger.info("No stream selection provided, returning all streams")
         return available_streams
 
 
