@@ -50,7 +50,7 @@ class TapKlaviyo(Tap):
 
     def discover_streams(self) -> list[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
-        available_streams = [
+        return [
             streams.EventsStream(self),
             streams.CampaignsStream(self),
             streams.MetricsStream(self),
@@ -60,38 +60,6 @@ class TapKlaviyo(Tap):
             streams.FlowsStream(self),
             streams.TemplatesStream(self),
         ]
-        
-        # Dobavi imena selektiranih i isključenih streamova iz konfiguracije
-        selected = set()
-        excluded = set()
-        
-        for selection in self.config.get('select', []):
-            if selection.startswith('!'):
-                # Ako počinje s !, to je isključeni stream
-                stream_name = selection[1:].split('.')[0]  # Makni ! i uzmi ime streama
-                excluded.add(stream_name)
-            else:
-                # Inače je selektirani stream
-                stream_name = selection.split('.')[0]
-                selected.add(stream_name)
-        
-        self.logger.info(f"Selected streams: {selected}")
-        self.logger.info(f"Excluded streams: {excluded}")
-        
-        # Filtriraj streamove
-        filtered_streams = []
-        for stream in available_streams:
-            if stream.name in excluded:
-                self.logger.info(f"Stream {stream.name} is explicitly excluded")
-                continue
-            if stream.name in selected:
-                stream.selected = True
-                filtered_streams.append(stream)
-                self.logger.info(f"Stream {stream.name} is selected")
-            else:
-                self.logger.info(f"Stream {stream.name} is not selected")
-        
-        return filtered_streams
 
 
 if __name__ == "__main__":
