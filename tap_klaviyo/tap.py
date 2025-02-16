@@ -7,6 +7,15 @@ from singer_sdk import typing as th  # JSON schema typing helpers
 
 from tap_klaviyo import streams
 
+STREAM_TYPES = [
+    streams.CampaignsStream,
+    streams.MetricsStream,
+    streams.ProfilesStream,
+    streams.ListsStream,
+    streams.ListPersonStream,
+    streams.FlowsStream,
+    streams.TemplatesStream,
+]
 
 class TapKlaviyo(Tap):
     """Klaviyo tap class."""
@@ -56,18 +65,13 @@ class TapKlaviyo(Tap):
 
     def discover_streams(self) -> list[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
-        available_streams = [
-            streams.EventsStream(self),
-            streams.CampaignsStream(self),
-            streams.MetricsStream(self),
-            streams.ProfilesStream(self),
-            streams.ListsStream(self),
-            streams.ListPersonStream(self),
-            streams.FlowsStream(self),
-            streams.TemplatesStream(self),
-        ]
-
-        # Ako imamo selected_streams u konfiguraciji, koristi ih za filtriranje
+        available_streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
+        
+        # Dodaj events stream samo ako je eksplicitno zatražen
+        if self.config.get("enable_events_stream", False):
+            available_streams.append(streams.EventsStream(tap=self))
+        
+        # Filtriraj streamove ako je specificirana selekcija
         if selected_streams := self.config.get('selected_streams'):
             self.logger.info(f"Filtering streams based on selection: {selected_streams}")
             return [
