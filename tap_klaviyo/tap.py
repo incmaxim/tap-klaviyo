@@ -15,11 +15,25 @@ class TapKlaviyo(Tap):
 
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "auth_token",
+            "refresh_token",
             th.StringType,
             required=True,
             secret=True,  # Flag config as protected.
-            description="The token to authenticate against the API service",
+            description="The refresh token to authenticate against the API service",
+        ),
+        th.Property(
+            "client_id",
+            th.StringType,
+            required=True,
+            secret=True,
+            description="The client ID for OAuth authentication",
+        ),
+        th.Property(
+            "client_secret",
+            th.StringType,
+            required=True,
+            secret=True,
+            description="The client secret for OAuth authentication",
         ),
         th.Property(
             "revision",

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import typing as t
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl
+import base64
+import requests
+from typing import Optional
 
 from singer_sdk.authenticators import APIKeyAuthenticator
 from singer_sdk.pagination import BaseHATEOASPaginator
@@ -13,8 +16,6 @@ from singer_sdk.streams import RESTStream
 
 if t.TYPE_CHECKING:
     from urllib.parse import ParseResult
-
-    import requests
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 UTC = timezone.utc
@@ -41,24 +42,72 @@ class KlaviyoPaginator(BaseHATEOASPaginator):
         return data.get("links").get("next")  # type: ignore[no-any-return]
 
 
+class KlaviyoAuthenticator:
+    """Handles OAuth authentication for Klaviyo API."""
+
+    TOKEN_URL = "https://a.klaviyo.com/oauth/token"
+
+    def __init__(self, client_id: str, client_secret: str, refresh_token: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
+        self._access_token: Optional[str] = None
+        self._token_expires_at: Optional[datetime] = None
+
+    def _get_basic_auth_header(self) -> str:
+        """Generate Basic auth header from client credentials."""
+        credentials = f"{self.client_id}:{self.client_secret}"
+        encoded = base64.b64encode(credentials.encode()).decode()
+        return f"Basic {encoded}"
+
+    def get_access_token(self) -> str:
+        """Get a valid access token, refreshing if necessary."""
+        if not self._access_token or not self._token_expires_at or datetime.utcnow() >= self._token_expires_at:
+            self._refresh_access_token()
+        return self._access_token
+
+    def _refresh_access_token(self) -> None:
+        """Refresh the access token using the refresh token."""
+        headers = {
+            "Authorization": self._get_basic_auth_header(),
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token
+        }
+
+        response = requests.post(self.TOKEN_URL, headers=headers, data=data)
+        response.raise_for_status()
+        
+        token_data = response.json()
+        self._access_token = token_data["access_token"]
+        # Set token expiration time (usually 1 hour, subtract 5 minutes for safety)
+        self._token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"] - 300)
+
+
 class KlaviyoStream(RESTStream):
     """Klaviyo stream class."""
 
     url_base = "https://a.klaviyo.com/api"
     records_jsonpath = "$[data][*]"
     max_page_size: int | None = None
+    _authenticator: Optional[KlaviyoAuthenticator] = None
 
     @property
     def authenticator(self) -> APIKeyAuthenticator:
-        """Return a new authenticator object.
-
-        Returns:
-            An authenticator instance.
-        """
+        """Return a new authenticator object."""
+        if not self._authenticator:
+            self._authenticator = KlaviyoAuthenticator(
+                client_id=self.config["client_id"],
+                client_secret=self.config["client_secret"],
+                refresh_token=self.config["refresh_token"]
+            )
+        
         return APIKeyAuthenticator.create_for_stream(
             self,
             key="Authorization",
-            value=f'Klaviyo-API-Key {self.config.get("auth_token", "")}',
+            value=f"Bearer {self._authenticator.get_access_token()}",
             location="header",
         )
 
