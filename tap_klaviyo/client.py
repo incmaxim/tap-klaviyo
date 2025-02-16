@@ -165,7 +165,12 @@ class KlaviyoStream(RESTStream):
         context: dict | None,
     ) -> t.Iterable[dict]:
         """Get records from stream source."""
-        # Dohvati zapise
+        # Provjeri je li stream selektiran
+        if hasattr(self.tap, 'catalog'):
+            if self.name not in self.tap.catalog.get('selected_streams', []):
+                self.logger.info(f"Stream {self.name} is not selected, skipping")
+                return
+        
         self.logger.info(f"Fetching records for stream {self.name}")
         for record in super().get_records(context):
             yield record

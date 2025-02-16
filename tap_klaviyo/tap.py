@@ -50,7 +50,7 @@ class TapKlaviyo(Tap):
 
     def discover_streams(self) -> list[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
-        return [
+        available_streams = [
             streams.EventsStream(self),
             streams.CampaignsStream(self),
             streams.MetricsStream(self),
@@ -60,6 +60,20 @@ class TapKlaviyo(Tap):
             streams.FlowsStream(self),
             streams.TemplatesStream(self),
         ]
+
+        # Ako imamo catalog.json, koristi ga za filtriranje streamova
+        if self.config.get('catalog'):
+            selected_streams = []
+            for stream in available_streams:
+                # Provjeri je li stream selektiran u katalogu
+                if stream.name in self.config['catalog'].get('selected_streams', []):
+                    selected_streams.append(stream)
+                    self.logger.info(f"Stream {stream.name} is selected")
+                else:
+                    self.logger.info(f"Stream {stream.name} is not selected")
+            return selected_streams
+        
+        return available_streams
 
 
 if __name__ == "__main__":
