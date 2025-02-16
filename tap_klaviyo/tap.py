@@ -54,9 +54,9 @@ class TapKlaviyo(Tap):
     def discover_streams(self) -> List[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
         # Inicijaliziramo sve streamove
-        available_streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
+        streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
         # Vraćamo samo one koji su selektovani kroz Meltano konfiguraciju
-        return [stream for stream in available_streams if stream.selected]
+        return [stream for stream in streams if stream.selected]
 
 
 if __name__ == "__main__":
