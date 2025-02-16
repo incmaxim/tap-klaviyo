@@ -166,7 +166,9 @@ class KlaviyoStream(RESTStream):
     ) -> t.Iterable[dict]:
         """Get records from stream source."""
         # Provjeri je li stream selektiran
-        self.logger.info(f"Checking selection for stream {self.name}: selected={self.selected}")
+        self.logger.info(f"Starting get_records for stream {self.name}")
+        self.logger.info(f"Stream {self.name} selection status: selected={self.selected}")
+        
         if not self.selected:
             self.logger.info(f"Stream {self.name} is not selected. Skipping.")
             return []
@@ -174,11 +176,13 @@ class KlaviyoStream(RESTStream):
         # Provjeri koje su kolone selektirane
         selected_properties = self.get_selected_properties()
         self.logger.info(f"Selected properties for stream {self.name}: {selected_properties}")
+        
         if not selected_properties:
             self.logger.info(f"No properties selected for stream {self.name}. Skipping.")
             return []
 
         # Dohvati zapise
+        self.logger.info(f"Fetching records for stream {self.name}")
         for record in super().get_records(context):
             # Filtriraj samo selektirane kolone
             if selected_properties:
@@ -193,7 +197,13 @@ class KlaviyoStream(RESTStream):
             return set()
         
         properties = set()
+        excluded_properties = set()
+        
         for md in self.metadata.values():
-            if md.selected:
+            if md.key.startswith('!'):
+                excluded_properties.add(md.key[1:])  # Makni ! prefix
+            elif md.selected:
                 properties.add(md.key)
-        return properties
+        
+        # Ukloni isključene propertije
+        return properties - excluded_properties

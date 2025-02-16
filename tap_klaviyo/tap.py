@@ -61,19 +61,35 @@ class TapKlaviyo(Tap):
             streams.TemplatesStream(self),
         ]
         
-        # Dobavi imena selektiranih streamova iz konfiguracije
-        selected_stream_names = {s.split('.')[0] for s in self.config.get('select', [])}
-        self.logger.info(f"Selected streams: {selected_stream_names}")
+        # Dobavi imena selektiranih i isključenih streamova iz konfiguracije
+        selected = set()
+        excluded = set()
         
-        # Filtriraj streamove i postavi selected flag
+        for selection in self.config.get('select', []):
+            if selection.startswith('!'):
+                # Ako počinje s !, to je isključeni stream
+                stream_name = selection[1:].split('.')[0]  # Makni ! i uzmi ime streama
+                excluded.add(stream_name)
+            else:
+                # Inače je selektirani stream
+                stream_name = selection.split('.')[0]
+                selected.add(stream_name)
+        
+        self.logger.info(f"Selected streams: {selected}")
+        self.logger.info(f"Excluded streams: {excluded}")
+        
+        # Filtriraj streamove
         filtered_streams = []
         for stream in available_streams:
-            if stream.name in selected_stream_names:
+            if stream.name in excluded:
+                self.logger.info(f"Stream {stream.name} is explicitly excluded")
+                continue
+            if stream.name in selected:
                 stream.selected = True
                 filtered_streams.append(stream)
+                self.logger.info(f"Stream {stream.name} is selected")
             else:
-                stream.selected = False
-                self.logger.info(f"Stream {stream.name} is not selected, skipping")
+                self.logger.info(f"Stream {stream.name} is not selected")
         
         return filtered_streams
 
