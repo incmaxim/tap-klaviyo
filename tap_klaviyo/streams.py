@@ -5,8 +5,8 @@ from __future__ import annotations
 import typing as t
 from pathlib import Path
 
+from singer_sdk import typing as th
 from tap_klaviyo.client import KlaviyoStream
-from tap_klaviyo.schemas import th
 
 if t.TYPE_CHECKING:
     from urllib.parse import ParseResult
