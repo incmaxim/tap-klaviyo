@@ -49,18 +49,6 @@ class TapKlaviyo(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        th.Property(
-            "enable_campaigns",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable campaigns stream",
-        ),
-        th.Property(
-            "enable_metrics",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable metrics stream",
-        ),
     ).to_dict()
 
     def setup_mapper(self):
