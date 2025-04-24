@@ -1,0 +1,102 @@
+{
+    "properties": {
+        "id": {
+            "description": "The report ID",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "campaign_id": {
+            "description": "The campaign ID",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "campaign_message_id": {
+            "description": "The campaign message ID",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "send_channel": {
+            "description": "The send channel",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "bounced": {
+            "description": "Number of bounced emails",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "bounced_or_failed": {
+            "description": "Number of bounced or failed emails",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "clicks": {
+            "description": "Number of clicks",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "click_rate": {
+            "description": "Click rate percentage",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "conversions": {
+            "description": "Number of conversions",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "delivered": {
+            "description": "Number of delivered emails",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "failed": {
+            "description": "Number of failed deliveries",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "opens": {
+            "description": "Number of opens",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "recipients": {
+            "description": "Number of recipients",
+            "type": [
+                "number",
+                "null"
+            ]
+        },
+        "unsubscribes": {
+            "description": "Number of unsubscribes",
+            "type": [
+                "number",
+                "null"
+            ]
+        }
+    }
+}
