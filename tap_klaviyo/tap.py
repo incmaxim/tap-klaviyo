@@ -16,6 +16,7 @@ STREAM_TYPES = [
     streams.ListPersonStream,
     streams.FlowsStream,
     streams.TemplatesStream,
+    streams.CampaignValuesReportsStream,
 ]
 
 class TapKlaviyo(Tap):
@@ -48,6 +49,12 @@ class TapKlaviyo(Tap):
             "start_date",
             th.DateTimeType,
             description="The earliest record date to sync",
+        ),
+        th.Property(
+            "conversion_metric_id",
+            th.StringType,
+            description="The ID of the conversion metric to use for campaign reporting",
+            default="RjtB2B",
         ),
     ).to_dict()
 
